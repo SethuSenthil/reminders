@@ -53,18 +53,35 @@ class Reminders {
         return String(data: jsonData ?? Data(), encoding: .utf8)
     }
 
-    func getReminders(_ id: String?, _ completion: @escaping(String?) -> ()) {
-        var calendar: [EKCalendar]? = nil
-        if let id = id { calendar = [eventStore.calendar(withIdentifier: id) ?? EKCalendar()] }
-        let predicate: NSPredicate? = eventStore.predicateForReminders(in: calendar)
-        if let predicate = predicate {
-            eventStore.fetchReminders(matching: predicate) { (_ reminders: [Any]?) -> Void in
-                let rems = reminders as? [EKReminder] ?? [EKReminder]()
-                let result = rems.map { Reminder(reminder: $0) }
-                let json = try? JSONEncoder().encode(result)
-                completion(String(data: json ?? Data(), encoding: .utf8))
-            }
+    private func calendars(for id: String?) -> [EKCalendar]? {
+        if let id = id { return [eventStore.calendar(withIdentifier: id) ?? EKCalendar()] }
+        return nil
+    }
+
+    private func fetchAndEncode(_ predicate: NSPredicate, _ completion: @escaping(String?) -> ()) {
+        eventStore.fetchReminders(matching: predicate) { (_ reminders: [Any]?) -> Void in
+            let rems = reminders as? [EKReminder] ?? [EKReminder]()
+            let result = rems.map { Reminder(reminder: $0) }
+            let json = try? JSONEncoder().encode(result)
+            completion(String(data: json ?? Data(), encoding: .utf8))
         }
+    }
+
+    func getReminders(_ id: String?, _ completion: @escaping(String?) -> ()) {
+        let predicate: NSPredicate? = eventStore.predicateForReminders(in: calendars(for: id))
+        if let predicate = predicate {
+            fetchAndEncode(predicate, completion)
+        }
+    }
+
+    /// Fetches only incomplete reminders, optionally scoped to a single list.
+    /// Passing `nil` for the due-date bounds matches all incomplete reminders
+    /// (no date filter) in one call, so callers can count / categorize without
+    /// pulling completed reminders they would discard.
+    func getIncompleteReminders(_ id: String?, _ completion: @escaping(String?) -> ()) {
+        let predicate: NSPredicate = eventStore.predicateForIncompleteReminders(
+            withDueDateStarting: nil, ending: nil, calendars: calendars(for: id))
+        fetchAndEncode(predicate, completion)
     }
 
     func saveReminder(_ json: [String: Any], _ completion: @escaping(String?) -> ()) {

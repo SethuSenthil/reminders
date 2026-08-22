@@ -33,7 +33,16 @@ public class RemindersPlugin: NSObject, FlutterPlugin {
     case "getReminders":
       if let args = call.arguments as? [String: String?] {
         if let id = args["id"] {
-          self.reminders.getReminders(id) { (reminders) in 
+          self.reminders.getReminders(id) { (reminders) in
+            result(reminders)
+          }
+        }
+      }
+
+    case "getIncompleteReminders":
+      if let args = call.arguments as? [String: String?] {
+        if let id = args["id"] {
+          self.reminders.getIncompleteReminders(id) { (reminders) in
             result(reminders)
           }
         }

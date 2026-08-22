@@ -64,6 +64,16 @@ class MethodChannelReminders extends RemindersPlatform {
   }
 
   @override
+  Future<List<Reminder>?> getIncompleteReminders([String? id]) async {
+    final reminders =
+        await methodChannel.invokeMethod('getIncompleteReminders', {'id': id});
+    final result = jsonDecode(reminders)
+        .map<Reminder>((reminder) => Reminder.fromJson(reminder))
+        .toList();
+    return (result);
+  }
+
+  @override
   Future<Reminder> saveReminder(Reminder reminder) async {
     reminder.id = await methodChannel
         .invokeMethod('saveReminder', {'reminder': reminder.toJson()});

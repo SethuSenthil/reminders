@@ -34,6 +34,14 @@ class Reminders {
     return RemindersPlatform.reminders.getReminders(id);
   }
 
+  /// Fetches only the *incomplete* reminders, optionally scoped to the list
+  /// [id]. When [id] is null, this returns the incomplete reminders across all
+  /// lists in a single call (much cheaper than [getReminders] per list, and it
+  /// never pulls completed reminders the caller would just discard).
+  Future<List<Reminder>?> getIncompleteReminders([String? id]) async {
+    return RemindersPlatform.reminders.getIncompleteReminders(id);
+  }
+
   Future<Reminder> saveReminder(Reminder reminder) async {
     return RemindersPlatform.reminders.saveReminder(reminder);
   }
